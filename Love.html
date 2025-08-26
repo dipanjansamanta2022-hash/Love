@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Click to see — 💘</title>
+  <style>
+    :root{
+      --bg1: #fff0f6;
+      --bg2: #ffe6f0;
+      --card: #ffffff;
+      --accent: #ff4d7e;
+      --accent-dark: #d81e5b;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Arial;
+      background: radial-gradient(circle at 10% 20%, #fff7fb 0%, transparent 20%),
+                  linear-gradient(135deg,var(--bg1), var(--bg2));
+      overflow:hidden;
+    }
+
+    .card{
+      width:min(720px, 92vw);
+      background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.95));
+      border-radius:22px;
+      padding:36px;
+      text-align:center;
+      box-shadow: 0 14px 40px rgba(216,30,91,0.12), 0 6px 18px rgba(0,0,0,0.06);
+      position:relative;
+      z-index:2;
+    }
+
+    h1{
+      margin:0 0 8px 0;
+      font-size:28px;
+      color:var(--accent-dark);
+      letter-spacing:0.6px;
+    }
+    p.lead{
+      margin:0 0 20px 0;
+      color:#7b3b51;
+      opacity:0.9;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      background: linear-gradient(90deg,var(--accent), #ff8aa3);
+      color:white;
+      padding:12px 20px;
+      border-radius:999px;
+      text-decoration:none;
+      font-weight:700;
+      font-size:16px;
+      border:0;
+      cursor:pointer;
+      box-shadow: 0 8px 20px rgba(255,105,145,0.18);
+      transition: transform .18s cubic-bezier(.2,.9,.3,1);
+    }
+    .btn:active{ transform: translateY(2px) scale(.995) }
+
+    .message{
+      margin-top:26px;
+      font-size:56px;
+      color:var(--accent-dark);
+      transform: scale(.75);
+      opacity:0;
+      transition: transform .45s cubic-bezier(.2,.9,.3,1), opacity .45s;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .message.show{
+      transform: scale(1);
+      opacity:1;
+    }
+
+    .heart {
+      display:inline-block;
+      font-size:48px;
+      transform-origin:center;
+      animation: pulse 1200ms infinite;
+      filter: drop-shadow(0 6px 18px rgba(216,30,91,0.18));
+    }
+    @keyframes pulse{
+      0%{ transform: scale(0.95) rotate(-6deg) }
+      50%{ transform: scale(1.08) rotate(6deg) }
+      100%{ transform: scale(0.95) rotate(-6deg) }
+    }
+
+    /* floating hearts canvas */
+    .float-area{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:1;
+    }
+    .float-heart{
+      position:absolute;
+      font-size:22px;
+      opacity:0;
+      transform: translateY(30px) scale(0.6);
+      animation: floatUp linear forwards;
+      text-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    @keyframes floatUp{
+      0%{ opacity:0; transform: translateY(10px) scale(.6) }
+      10%{ opacity:1 }
+      100%{ opacity:0; transform: translateY(-140vh) scale(1.2) }
+    }
+
+    /* small decorative bottom text */
+    .small{
+      margin-top:18px;
+      font-size:13px;
+      color:#6f4052;
+      opacity:0.85;
+    }
+
+    /* responsive */
+    @media (max-width:420px){
+      .message{ font-size:42px }
+      .heart{ font-size:40px }
+      .btn{ padding:10px 16px; font-size:15px }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-label="Love card">
+    <h1>একটা মিষ্টি সারপ্রাইজ ✨</h1>
+    <p class="lead">এই বাটনে ক্লিক করো — তারপর দেখো কী ঘটে ❤️</p>
+
+    <button id="loveBtn" class="btn" aria-describedby="hint">
+      <span>Click to see</span>
+      <span aria-hidden>💘</span>
+    </button>
+
+    <div id="message" class="message" aria-live="polite">
+      <span class="heart" aria-hidden>❤️</span>
+      <span id="text">I love you</span>
+      <span class="heart" aria-hidden>💞</span>
+    </div>
+
+    <div class="small" id="hint">Copy this page and send—খুলিে সবসময় আবারও দেখাবে 😉</div>
+  </div>
+
+  <div class="float-area" id="floatArea" aria-hidden="true"></div>
+
+  <script>
+    const btn = document.getElementById('loveBtn');
+    const msg = document.getElementById('message');
+    const floatArea = document.getElementById('floatArea');
+
+    // heart emojis pool for variety
+    const hearts = ['❤️','💖','💘','💕','💞','❣️','💓','💗','🌸','✨'];
+
+    function spawnHearts(count = 16){
+      const w = window.innerWidth;
+      for(let i=0;i<count;i++){
+        const el = document.createElement('div');
+        el.className = 'float-heart';
+        el.textContent = hearts[Math.floor(Math.random()*hearts.length)];
+        // random start position across width
+        const left = Math.random()*100;
+        el.style.left = left + 'vw';
+        // size variety
+        const size = 14 + Math.random()*28;
+        el.style.fontSize = size + 'px';
+        // delay and duration
+        const delay = Math.random()*0.6;
+        const duration = 2 + Math.random()*3;
+        el.style.animationDuration = duration + 's';
+        el.style.animationDelay = delay + 's';
+        // rotation
+        el.style.transform = `translateY(20px) rotate(${Math.random()*60-30}deg) scale(${0.6 + Math.random()*0.9})`;
+        floatArea.appendChild(el);
+        // remove after animation ends
+        setTimeout(()=> el.remove(), (delay + duration) * 1000 + 200);
+      }
+    }
+
+    btn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      // show message
+      msg.classList.add('show');
+
+      // spawn hearts / confetti
+      spawnHearts(28);
+
+      // tiny extra: change text to have emoji animation
+      const text = document.getElementById('text');
+      text.textContent = 'I love you ❤️';
+      // small sparkle: spawn again after a moment
+      setTimeout(()=> spawnHearts(18), 450);
+    });
+
+    // optional: show hearts automatically when page first loads (comment out if not wanted)
+    // window.addEventListener('load', ()=> spawnHearts(8));
+
+    // Make sure it still works if user clicks many times
+    btn.addEventListener('click', ()=> {
+      // briefly bump the button
+      btn.style.transform = 'translateY(-3px) scale(1.02)';
+      setTimeout(()=> btn.style.transform = '', 160);
+    });
+  </script>
+</body>
+</html>
